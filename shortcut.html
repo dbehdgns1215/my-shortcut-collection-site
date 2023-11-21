@@ -63,8 +63,9 @@
             }
 
             #add-shortcut-btn,
+            #delete-group-btn,
             #delete-shortcut-btn,
-            #toggle-drag-and-drop-btn, #delete-group-btn {
+            #toggle-drag-and-drop-btn {
                 width: 20%;
                 margin-bottom: 20px;
                 margin-left: 10px;
@@ -109,7 +110,7 @@
                 border: 1px solid #ccc;
                 padding: 10px;
                 margin: 10px;
-                cursor: move;
+                cursor: pointer;
             }
 
             #memo-text {
@@ -599,7 +600,6 @@
                         .value = memoText;
                 }
             }
-
 
             // 그룹 삭제 팝업 열기
             function openDeleteGroupPopup() {
