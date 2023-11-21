@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>What Ever You Want</title>
+        <style>
+            body {
+                font-family: 'Arial', sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f0f0f0;
+            }
+
+            .group-container {
+                max-width: 1800px;
+                margin: 20px auto;
+                background-color: #fff;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .shortcuts {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+
+            .shortcut {
+                width: 20%;
+                margin-bottom: 20px;
+                cursor: pointer;
+                text-align: center;
+                box-sizing: border-box;
+                position: relative;
+            }
+
+            .shortcut img {
+                width: 20%;
+                max-height: 100px;
+                max-width: 100%;
+            }
+
+            .delete-button {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                cursor: pointer;
+                background-color: #f00;
+                color: #fff;
+                border: none;
+                padding: 5px;
+                border-radius: 50%;
+                font-size: 12px;
+                display: none;
+            }
+
+            .group-title {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+
+            #add-shortcut-btn,
+            #delete-shortcut-btn,
+            #toggle-drag-and-drop-btn, #delete-group-btn {
+                width: 20%;
+                margin-bottom: 20px;
+                margin-left: 10px;
+            }
+
+            .popup-container {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                justify-content: center;
+                align-items: center;
+            }
+
+            .popup-content {
+                background: #fff;
+                padding: 20px;
+                max-width: 400px;
+                text-align: center;
+                border-radius: 8px;
+            }
+
+            #addShortcutPopup,
+            #deleteShortcutPopup {
+                display: none;
+            }
+
+            #shortcut-list {
+                list-style: none;
+                padding: 0;
+            }
+
+            #shortcut-list li {
+                margin-bottom: 10px;
+            }
+
+            .group-container,
+            .shortcut {
+                border: 1px solid #ccc;
+                padding: 10px;
+                margin: 10px;
+                cursor: move;
+            }
+
+            #memo-text {
+                width: calc(100% - 80px);
+                height: 500px;
+                margin-bottom: 10px;
+                margin-left: 10px;
+                box-sizing: border-box;
+                padding: 10px;
+                resize: none;
+            }
+
+            #save-memo-btn {
+                width: calc(100% - 80px);
+                padding: 10px;
+                margin-left: 10px;
+                margin-bottom: 20px;
+                box-sizing: border-box;
+            }
+
+            #shortcut-list {
+                list-style: none;
+                padding: 0;
+                text-align: left;
+            }
+
+            #shortcut-list li {
+                margin-bottom: 10px;
+            }
+
+            #deleteGroupPopup {
+                display: none;
+            }
+
+            #deleteGroupPopup .popup-content {
+                max-width: 400px;
+            }
+
+            #deleteGroupPopup label {
+                display: block;
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="group-container" id="custom-group">
+            <!-- 기존 그룹이 동적으로 추가되고 바로가기 추가 시 동적으로 추가되는 부분 -->
+        </div>
+
+        <button id="add-shortcut-btn" onclick="openAddShortcutPopup()">바로가기 추가</button>
+        <button id="toggle-drag-and-drop-btn" onclick="toggleDragAndDropMode()">바로가기 이동 모드 활성화</button>
+        <button id="delete-shortcut-btn" onclick="openDeleteShortcutPopup()">바로가기 삭제</button>
+        <button id="delete-group-btn" onclick="openDeleteGroupPopup()">그룹 삭제</button>
+        <div id="addShortcutPopup" class="popup-container">
+            <div class="popup-content">
+                <h2>바로가기 추가</h2>
+                <label for="shortcut-keyword">키워드 :</label>
+                <input type="text" id="shortcut-keyword" placeholder="Enter Keyword">
+                <br>
+                <label for="shortcut-name">바로가기 이름 :</label>
+                <input type="text" id="shortcut-name" placeholder="Enter Shortcut Name">
+                <br>
+                <label for="shortcut-image">이미지 주소 :</label>
+                <input type="text" id="shortcut-image" placeholder="Enter Image URL">
+                <br>
+                <label for="shortcut-url">바로가기 주소 :</label>
+                <input type="text" id="shortcut-url" placeholder="Enter URL">
+                <br>
+                <button onclick="addShortcutFromPopup()">추가</button>
+                <button onclick="closeAddShortcutPopup()">취소</button>
+            </div>
+        </div>
+
+        <div id="deleteShortcutPopup" class="popup-container">
+            <div class="popup-content">
+                <h2>바로가기 삭제</h2>
+                <ul id="shortcut-list"></ul>
+                <button onclick="closeDeleteShortcutPopup()">닫기</button>
+            </div>
+        </div>
+
+        <div id="deleteGroupPopup" class="popup-container">
+            <div class="popup-content">
+                <h2>그룹 삭제</h2>
+                <label for="group-select">삭제할 그룹 선택</label>
+                <select id="group-select"></select>
+                <button onclick="deleteGroup()">삭제</button>
+                <button onclick="closeDeleteGroupPopup()">취소</button>
+            </div>
+        </div>
+
+        <textarea id="memo-text" placeholder="메모를 입력하세요"></textarea>
+        <button id="save-memo-btn" onclick="saveMemo()">메모 저장</button>
+
+        <script>
+            let draggedElement = null;
+            let dragAndDropMode = false;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                loadGroupsFromLocalStorage();
+                loadMemo();
+            });
+
+            function openAddShortcutPopup() {
+                const popup = document.getElementById('addShortcutPopup');
+                popup.style.display = 'flex';
+                let groupContainer = document.getElementById(keyword);
+                if (!groupContainer) {
+                    // 그룹이 없을 경우 새로 생성
+                    groupContainer = createKeywordGroup(keyword);
+                    document
+                        .getElementById('custom-group')
+                        .appendChild(groupContainer);
+                }
+            }
+
+            function closeAddShortcutPopup() {
+                const popup = document.getElementById('addShortcutPopup');
+                popup.style.display = 'none';
+            }
+
+            function addShortcutFromPopup() {
+                const keywordInput = document.getElementById('shortcut-keyword');
+                const nameInput = document.getElementById('shortcut-name');
+                const imageInput = document.getElementById('shortcut-image');
+                const urlInput = document.getElementById('shortcut-url');
+
+                const keyword = keywordInput
+                    .value
+                    .trim();
+                const name = nameInput
+                    .value
+                    .trim();
+                const image = imageInput
+                    .value
+                    .trim();
+                const url = urlInput
+                    .value
+                    .trim();
+
+                if (keyword !== '' && name !== '' && image !== '' && url !== '') {
+                    let groupContainer = document.getElementById(keyword);
+                    if (!groupContainer) {
+                        groupContainer = createKeywordGroup(keyword);
+                        document
+                            .getElementById('custom-group')
+                            .appendChild(groupContainer);
+                    }
+
+                    const shortcutDiv = createShortcutElement(name, image, url);
+                    groupContainer
+                        .querySelector('.shortcuts')
+                        .appendChild(shortcutDiv);
+
+                    // 로컬 스토리지에 바로가기 정보 저장
+                    saveShortcutToLocalStorage(keyword, name, image, url);
+
+                    // 바로가기 추가 후 입력 필드 초기화
+                    keywordInput.value = '';
+                    nameInput.value = '';
+                    imageInput.value = '';
+                    urlInput.value = '';
+
+                    closeAddShortcutPopup(); // 바로가기 추가 팝업창 닫기
+
+                    // 로컬 스토리지의 그룹 순서 업데이트
+                    updateLocalStorageOrder();
+                }
+            }
+
+            function createKeywordGroup(groupId) {
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'group-container';
+                groupContainer.id = groupId;
+
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'group-title';
+                groupTitle.textContent = groupId;
+
+                const shortcutsContainer = document.createElement('div');
+                shortcutsContainer.className = 'shortcuts';
+
+                groupContainer.appendChild(groupTitle);
+                groupContainer.appendChild(shortcutsContainer);
+
+                return groupContainer;
+            }
+
+            function createShortcutElement(name, image, url) {
+                const shortcutDiv = document.createElement('div');
+                shortcutDiv.className = 'shortcut';
+                shortcutDiv.draggable = true;
+                shortcutDiv.innerHTML = `
+      <button class="delete-button" onclick="deleteShortcut(this)">X</button>
+      <img src="${image}" alt="${name}" onclick="openNewWindow('${url}')">
+      <p>${name}</p>
+    `;
+
+                // 드래그 시작 이벤트 추가
+                shortcutDiv.addEventListener('dragstart', handleDragStart);
+
+                return shortcutDiv;
+            }
+
+            function openNewWindow(url) {
+                window.open(url, '_blank');
+            }
+
+            function openDeleteShortcutPopup() {
+                const popup = document.getElementById('deleteShortcutPopup');
+                const shortcutList = document.getElementById('shortcut-list');
+                shortcutList.innerHTML = '';
+
+                // 로컬 스토리지에서 저장되어있는 바로가기 정보 로드
+                const shortcuts = document.querySelectorAll('.shortcut');
+                for (const shortcut of shortcuts) {
+                    const name = shortcut
+                        .querySelector('p')
+                        .innerText;
+                    const url = shortcut
+                        .querySelector('img')
+                        .getAttribute('onclick')
+                        .match(/'([^']+)'/)[1];
+
+                    const keyword = shortcut
+                        .closest('.group-container')
+                        .id;
+
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<button onclick="deleteShortcutByName('${name}')">X</button> ${keyword}) ${name}`;
+                    shortcutList.appendChild(listItem);
+                }
+
+                popup.style.display = 'flex';
+            }
+
+            function closeDeleteShortcutPopup() {
+                const popup = document.getElementById('deleteShortcutPopup');
+                popup.style.display = 'none';
+            }
+
+            function deleteShortcut(button) {
+                const shortcutDiv = button.parentNode;
+                const keyword = shortcutDiv
+                    .closest('.group-container')
+                    .id;
+
+                // 로컬 스토리지에 저장되어있는 바로가기 정보 삭제
+                const name = shortcutDiv
+                    .querySelector('p')
+                    .innerText;
+                removeShortcutFromLocalStorage(keyword, name);
+
+                // 페이지 내에서 바로가기 삭제시키기
+                shortcutDiv
+                    .parentNode
+                    .removeChild(shortcutDiv);
+
+                // 로컬 스토리지에 변동된 정보 저장 및 그룹이 비어있으면 삭제
+                updateLocalStorageOrderAndRemoveEmptyGroup(groupId);
+            }
+
+            function deleteShortcutByName(name) {
+                const shortcuts = document.querySelectorAll('.shortcut');
+
+                // 특정 이름을 가진 바로가기를 찾아서 제거합니다.
+                for (const shortcut of shortcuts) {
+                    const shortcutName = shortcut
+                        .querySelector('p')
+                        .innerText;
+                    if (shortcutName === name) {
+                        const keyword = shortcut
+                            .closest('.group-container')
+                            .id;
+                        removeShortcutFromLocalStorage(keyword, name);
+                        shortcut
+                            .parentNode
+                            .removeChild(shortcut);
+
+                        // 로컬 스토리지에 변동된 정보 저장 및 그룹이 비어있으면 삭제
+                        updateLocalStorageOrderAndRemoveEmptyGroup(keyword);
+
+                        break;
+                    }
+                }
+            }
+            function removeGroupFromLocalStorage(groupId) {
+                let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || [];
+
+                // 특정 groupId를 가진 그룹을 groupOrder에서 제거
+                groupOrder = groupOrder.filter(group => group.groupId !== groupId);
+
+                localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
+            }
+
+            function updateLocalStorageOrderAndRemoveEmptyGroup(groupId) {
+                updateLocalStorageOrder(); // 로컬 스토리지 업데이트
+
+                const groupContainer = document.getElementById(groupId);
+                const shortcutsInGroup = groupContainer.querySelectorAll('.shortcut');
+
+                // 그룹이 비어있으면 삭제
+                if (shortcutsInGroup.length === 0) {
+                    groupContainer
+                        .parentNode
+                        .removeChild(groupContainer);
+                    removeGroupFromLocalStorage(groupId); // 그룹이 삭제되었으므로 로컬 스토리지에서도 제거
+                }
+            }
+
+            function updateLocalStorageOrderAndRemoveEmptyGroup(keyword) {
+                updateLocalStorageOrder(); // 로컬 스토리지 업데이트
+
+                const groupContainer = document.getElementById(keyword);
+                const shortcutsInGroup = groupContainer.querySelectorAll('.shortcut');
+
+                // 그룹이 비어있으면 삭제
+                if (shortcutsInGroup.length === 0) {
+                    groupContainer
+                        .parentNode
+                        .removeChild(groupContainer);
+                    removeGroupFromLocalStorage(keyword); // 그룹이 삭제되었으므로 로컬 스토리지에서도 제거
+                }
+            }
+
+            function saveShortcutToLocalStorage(keyword, name, image, url) {
+                const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+                shortcuts.push({keyword, name, image, url});
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+            }
+
+            function removeShortcutFromLocalStorage(keyword, name) {
+                let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+                shortcuts = shortcuts.filter(
+                    shortcut => !(shortcut.keyword === keyword && shortcut.name === name)
+                );
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+            }
+
+            // 페이지 로드 시 로컬 스토리지에서 기존 바로가기들을 로드
+            document.addEventListener('DOMContentLoaded', () => {
+                const customGroup = document.getElementById('custom-group');
+                const groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || [];
+
+                groupOrder.forEach(({groupId, shortcutOrder}) => {
+                    // 그룹 유무 판단 후, 없으면 생성
+                    let groupContainer = document.getElementById(groupId);
+                    if (!groupContainer) {
+                        groupContainer = createKeywordGroup(groupId);
+                        customGroup.appendChild(groupContainer);
+                    }
+
+                    // 바로가기 요소를 생성하고 그룹에 추가
+                    shortcutOrder.forEach(({name, image, url}) => {
+                        const shortcutDiv = createShortcutElement(name, image, url);
+                        groupContainer
+                            .querySelector('.shortcuts')
+                            .appendChild(shortcutDiv);
+                    });
+                });
+
+                loadMemo();
+            });
+
+            function toggleDragAndDropMode() {
+                dragAndDropMode = !dragAndDropMode;
+
+                const buttonText = dragAndDropMode
+                    ? '비활성화'
+                    : '활성화';
+                document
+                    .getElementById('toggle-drag-and-drop-btn')
+                    .innerText = '바로가기 이동 모드 ' + buttonText;
+                if (dragAndDropMode) {
+                    // 드래그 앤 드롭 모드가 활성화된 경우
+                    document
+                        .querySelectorAll('.shortcut')
+                        .forEach(shortcut => {
+                            shortcut.draggable = true;
+                            shortcut.addEventListener('dragstart', handleDragStart);
+                            shortcut.addEventListener('dragover', allowDrop);
+                            shortcut.addEventListener('drop', handleDrop);
+                        });
+                } else {
+                    // 드래그 앤 드롭 모드가 비활성화된 경우
+                    document
+                        .querySelectorAll('.shortcut')
+                        .forEach(shortcut => {
+                            shortcut.draggable = false;
+                            shortcut.removeEventListener('dragstart', handleDragStart);
+                            shortcut.removeEventListener('dragover', allowDrop);
+                            shortcut.removeEventListener('drop', handleDrop);
+                        });
+
+                    // 드래그 앤 드롭이 완료되면 로컬 스토리지 업데이트
+                    updateLocalStorageOrder();
+                }
+            }
+
+            function handleDragStart(event) {
+                draggedElement = event.target;
+                event
+                    .dataTransfer
+                    .setData('text/plain', ''); // Firefox에서 드래깅을 활성화하기 위해 필요
+            }
+
+            function allowDrop(event) {
+                event.preventDefault();
+            }
+
+            function handleDrop(event) {
+                event.preventDefault();
+
+                // 드롭 대상이 바로가기인 경우 해당 위치에 드래그된 바로가기 삽입
+                const targetShortcut = event
+                    .target
+                    .closest('.shortcut');
+                const groupContainer = event
+                    .target
+                    .closest('.group-container');
+                const draggedKeyword = draggedElement
+                    .closest('.group-container')
+                    .id;
+
+                if (targetShortcut && groupContainer) {
+                    // 소스 그룹과 대상 그룹을 찾기
+                    const sourceGroup = document.getElementById(draggedKeyword);
+                    const destinationGroup = groupContainer;
+
+                    // 드래그된 요소를 대상 위치로 이동
+                    const shortcutsContainer = destinationGroup.querySelector('.shortcuts');
+                    shortcutsContainer.insertBefore(draggedElement, targetShortcut);
+
+                    // 로컬 스토리지에 변동된 정보 저장
+                    updateLocalStorageOrder();
+                }
+            }
+
+            function updateLocalStorageOrder() {
+                const customGroup = document.getElementById('custom-group');
+                const groupContainers = customGroup.querySelectorAll('.group-container');
+
+                // 각 그룹과 해당 그룹의 바로가기 순서를 저장
+                const groupOrder = Array
+                    .from(groupContainers)
+                    .map(container => {
+                        const groupId = container.id;
+                        const shortcutOrder = Array
+                            .from(container.querySelectorAll('.shortcut'))
+                            .map(shortcut => {
+                                const name = shortcut
+                                    .querySelector('p')
+                                    .innerText;
+                                const image = shortcut
+                                    .querySelector('img')
+                                    .getAttribute('src');
+                                const url = shortcut
+                                    .querySelector('img')
+                                    .getAttribute('onclick')
+                                    .match(/'([^']+)'/)[1];
+                                return {name, image, url};
+                            });
+                        return {groupId, shortcutOrder};
+                    });
+
+                console.log(groupOrder); // 확인을 위해 로그 찍기
+
+                // 로컬 스토리지에 저장
+                localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
+                console.log("저장 된거 맞냐");
+            }
+
+            function saveMemo() {
+                const memoText = document
+                    .getElementById('memo-text')
+                    .value;
+                localStorage.setItem('memo', memoText);
+                alert('메모가 저장되었습니다.');
+            }
+
+            function loadMemo() {
+                const memoText = localStorage.getItem('memo');
+                if (memoText) {
+                    document
+                        .getElementById('memo-text')
+                        .value = memoText;
+                }
+            }
+
+
+            // 그룹 삭제 팝업 열기
+            function openDeleteGroupPopup() {
+                const popup = document.getElementById('deleteGroupPopup');
+                const groupSelect = document.getElementById('group-select');
+                groupSelect.innerHTML = '';
+
+                // 로컬 스토리지에서 저장되어있는 그룹 정보 로드
+                const groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || [];
+
+                // 옵션 추가
+                groupOrder.forEach(({groupId}) => {
+                    const option = document.createElement('option');
+                    option.value = groupId;
+                    option.text = groupId;
+                    groupSelect.add(option);
+                });
+
+                popup.style.display = 'flex';
+            }
+
+            // 그룹 삭제
+            function deleteGroup() {
+                const groupSelect = document.getElementById('group-select');
+                const selectedGroupId = groupSelect.value;
+
+                // 로컬 스토리지에서 저장되어있는 그룹 정보 삭제
+                removeGroupFromLocalStorage(selectedGroupId);
+
+                // 페이지 내에서 그룹 삭제
+                const groupContainer = document.getElementById(selectedGroupId);
+                groupContainer
+                    .parentNode
+                    .removeChild(groupContainer);
+
+                // 해당 그룹에 포함된 바로가기도 로컬 스토리지에서 삭제
+                const shortcutsInGroup = groupContainer.querySelectorAll('.shortcut');
+                shortcutsInGroup.forEach(shortcut => {
+                    const name = shortcut
+                        .querySelector('p')
+                        .innerText;
+                    removeShortcutFromLocalStorage(selectedGroupId, name);
+                });
+
+                // 그룹 삭제 후 로컬 스토리지에 변동된 정보 저장 및 팝업 닫기
+                updateLocalStorageOrder();
+                closeDeleteGroupPopup();
+            }
+
+            // 그룹 삭제 팝업 닫기
+            function closeDeleteGroupPopup() {
+                const popup = document.getElementById('deleteGroupPopup');
+                popup.style.display = 'none';
+            }
+
+            // 그룹 삭제시 로컬 스토리지에서 그룹 정보 삭제
+            function removeGroupFromLocalStorage(groupId) {
+                let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || [];
+
+                // 특정 groupId를 가진 그룹을 groupOrder에서 제거
+                groupOrder = groupOrder.filter(group => group.groupId !== groupId);
+
+                localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
+            }
+
+            // 바로가기 삭제시 로컬 스토리지에서 해당 그룹의 바로가기 정보 삭제
+            function removeShortcutFromLocalStorage(groupId, name) {
+                let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+                shortcuts = shortcuts.filter(
+                    shortcut => !(shortcut.keyword === groupId && shortcut.name === name)
+                );
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+            }
+        </script>
+    </body>
+</html>
