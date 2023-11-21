@@ -1,0 +1,1 @@
+# my-shortcut-collection-site
